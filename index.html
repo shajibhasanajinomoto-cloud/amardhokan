@@ -111,7 +111,7 @@ footer{border-top:1px solid var(--line);margin-top:30px;padding:20px 16px;text-a
 
 <script>
 var CATS=["সব","গ্রোসারি","খাবার","পুরুষ","মহিলা"];
-var P=[
+var DEF=[
 {id:1,n:"মিনিকেট চাল",u:"৫ কেজি",p:420,o:460,c:"গ্রোসারি",e:"🌾",bg:"#f3ecd3"},
 {id:2,n:"সয়াবিন তেল",u:"৫ লিটার",p:890,o:940,c:"গ্রোসারি",e:"🫒",bg:"#eef0c8"},
 {id:3,n:"মসুর ডাল",u:"১ কেজি",p:140,c:"গ্রোসারি",e:"🫘",bg:"#f6dcc4"},
@@ -125,8 +125,9 @@ var P=[
 {id:11,n:"থ্রি-পিস (লন)",u:"Free size",p:2200,o:2600,c:"মহিলা",e:"👗",bg:"#fbdde7"},
 {id:12,n:"জামদানি শাড়ি",u:"৬ গজ",p:3800,c:"মহিলা",e:"🥻",bg:"#efdcf7"}
 ];
-var cart={},cat="সব",term="";
+var P=[],loaded=false,cart={},cat="সব",term="";
 try{cart=JSON.parse(localStorage.getItem("cart")||"{}")}catch(e){}
+try{var pc=JSON.parse(localStorage.getItem("prods")||"null");if(pc&&pc.p&&pc.p.length){P=pc.p;CATS=pc.c;loaded=true}}catch(e){}
 function save(){try{localStorage.setItem("cart",JSON.stringify(cart))}catch(e){}}
 function tk(n){return "৳"+n.toLocaleString("en-IN")}
 function $(i){return document.getElementById(i)}
@@ -136,8 +137,8 @@ function list(){
   $("title").textContent=cat=="সব"?"সব পণ্য":cat;
   $("grid").innerHTML=l.length?l.map(function(x){
     var off=x.o?Math.round((1-x.p/x.o)*100):0;
-    return '<div class="card"><div class="img" style="background:'+x.bg+'">'+(off?'<span class="tag">-'+off+'%</span>':'')+x.e+'</div><div class="info"><b>'+x.n+'</b><small>'+x.u+'</small><div class="pr">'+tk(x.p)+(x.o?'<s>'+tk(x.o)+'</s>':'')+'</div><button class="add" data-a="'+x.id+'">কার্টে যোগ করুন</button></div></div>'
-  }).join(""):'<div class="empty" style="grid-column:1/-1">কোনো পণ্য পাওয়া যায়নি। অন্য নাম দিয়ে খুঁজুন।</div>';
+    return '<div class="card"><div class="img" style="background:'+x.bg+'">'+(off?'<span class="tag">-'+off+'%</span>':'')+(x.img?'<img src="'+x.img+'" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover">':x.e)+'</div><div class="info"><b>'+x.n+'</b><small>'+x.u+'</small><div class="pr">'+tk(x.p)+(x.o?'<s>'+tk(x.o)+'</s>':'')+'</div>'+(x.s===false?'<button class="add" disabled style="opacity:.5;cursor:not-allowed">স্টক শেষ</button>':'<button class="add" data-a="'+x.id+'">কার্টে যোগ করুন</button>')+'</div></div>'
+  }).join(""):'<div class="empty" style="grid-column:1/-1">'+(loaded?'কোনো পণ্য পাওয়া যায়নি। অন্য নাম দিয়ে খুঁজুন।':'পণ্য লোড হচ্ছে…')+'</div>';
 }
 function sub(){return Object.keys(cart).reduce(function(s,k){var x=P.find(function(p){return p.id==k});return s+x.p*cart[k]},0)}
 function count(){return Object.keys(cart).reduce(function(s,k){return s+cart[k]},0)}
@@ -184,6 +185,17 @@ document.addEventListener("click",function(e){
 $("sf").onsubmit=function(e){e.preventDefault();term=$("q").value.trim().toLowerCase();list()};
 $("q").oninput=function(){term=this.value.trim().toLowerCase();list()};
 nav();list();drawCart();
+function loadProducts(){
+  fetch(ENDPOINT+"?action=products").then(function(r){return r.json()}).then(function(v){
+    var cs=[],pal=["#f3ecd3","#eef0c8","#f6dcc4","#e6eef5","#fde7b4","#d9efe6","#fbdde7","#efdcf7"];
+    if(!v||!v.length){P=DEF;CATS=["সব","গ্রোসারি","খাবার","পুরুষ","মহিলা"]}
+    else{P=v.map(function(x){if(cs.indexOf(x.c)<0)cs.push(x.c);x.bg=pal[cs.indexOf(x.c)%pal.length];return x});CATS=["সব"].concat(cs);
+      try{localStorage.setItem("prods",JSON.stringify({p:P,c:CATS}))}catch(e){}}
+    Object.keys(cart).forEach(function(k){if(!P.some(function(p){return p.id==k}))delete cart[k]});
+    loaded=true;save();cat="সব";nav();list();drawCart();
+  }).catch(function(){loaded=true;if(!P.length){P=DEF;list()}});
+}
+loadProducts();
 </script>
 </body>
 </html>
