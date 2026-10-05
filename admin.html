@@ -1,0 +1,14 @@
+<!DOCTYPE html><html lang="bn"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Orders</title>
+<style>body{font-family:system-ui,sans-serif;margin:16px;background:#fff;color:#14201b}table{border-collapse:collapse;width:100%;font-size:14px}th,td{border:1px solid #d5ddd9;padding:6px 8px;text-align:left;vertical-align:top}th{background:#eef5f2}.w{overflow-x:auto}input,button{padding:8px;font:inherit}button{background:#006a4e;color:#fff;border:0;border-radius:6px}</style></head>
+<body><h2>অর্ডার লিস্ট</h2>
+<p><input id="k" type="password" placeholder="Password"> <button id="b">দেখুন</button> <span id="m"></span></p>
+<div class="w"><table id="t"></table></div>
+<script>
+var ENDPOINT="https://script.google.com/macros/s/AKfycbx_R0lMesWjm-ia2D8lFGs2w-5AzTEgJVAzRCKXRcBm6tkwIkAmgXo9sLwOekVDFJ1N/exec";
+function esc(s){return String(s).replace(/[&<>]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;"}[c]})}
+function load(){var k=document.getElementById("k").value;
+fetch(ENDPOINT+"?key="+encodeURIComponent(k)).then(function(r){return r.json()}).then(function(v){
+document.getElementById("m").textContent=v.length+" টি অর্ডার";
+document.getElementById("t").innerHTML="<tr><th>সময়</th><th>নং</th><th>নাম</th><th>ফোন</th><th>ঠিকানা</th><th>পণ্য</th><th>মোট</th><th>পেমেন্ট</th><th>স্ট্যাটাস</th></tr>"+v.map(function(r){return"<tr>"+r.map(function(c,i){return"<td>"+esc(i==0?new Date(c).toLocaleString():c)+"</td>"}).join("")+"</tr>"}).join("")}).catch(function(){document.getElementById("m").textContent="লোড হয়নি"})}
+document.getElementById("b").onclick=load;
+</script></body></html>
